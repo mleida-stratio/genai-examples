@@ -8,19 +8,27 @@ otherwise made available, licensed or sublicensed to third parties;
 nor reverse engineered, disassembled or decompiled, without express
 written authorization from Stratio Big Data Inc., Sucursal en España.
 """
+import os
+
 from genai_core.server.server import GenAiServer
 
 
 def main():
     """
     Starts a stand-alone GenAI-api-like server with the chain loaded so that in can be easily executed locally.
-    Note that the chain will need access to a Genai-Gateway server, which could be provided from your
-    local machine via the GenAI development proxy. An example of json body to send in invoke POST is
+    Note that the chain will need access to a OpenSearch server, which should be accessible from your local machine.
+    The OpenSearchService class provided in this example is a simple service to interact with an OpenSearch instance
+     and should be adapted to your specific use case.
+    The url of the OpenSearch instance should be provided in the OPENSEARCH_URL environment variable (see README.md for more information).
+    An example of json body that work with our sample chain, to send in invoke POST is
     ```json
-       {
-          "input": {
-             "user_request": "Hi! Nice to meet you! Where's the Queen of Hearts?"
-          },
+        {
+           "input": {
+              "search_value":"Scott",
+              "collection_name":"semantic_banking_customer_product360",
+              "table_value":"customer",
+              "column_value":"Full_Name"
+            },
           "config": {
             "metadata": {
               "__genai_state": {
@@ -30,19 +38,20 @@ def main():
               }
             }
           }
-       }
+        }
       ```
       The "config" -> "metadata" -> "__genai_state" is only needed to test while developing locally.
       In a real environment GenAI API adds automatically that fields from the auth info before
       passing the data to the chain
     """
     app = GenAiServer(
-        module_name="basic_actor_chain_example.chain",
-        class_name="BasicActorChain",
+        module_name="opensearch_chain_example.chain",
+        class_name="OpenSearchChain",
         config={
-            # Change the endpoint according to the model you will use
-            "gateway_endpoint": "QA-openai-chat-gpt-4o-mini",
-            "llm_timeout": 30,
+            # OPENSEARCH_URL environment variable need to be set
+            # with the OpenSearch service url (see README.me for more information):
+            "opensearch_url": os.getenv("OPENSEARCH_URL"),
+            "opensearch_min_score": 30,
         },
     )
     app.start_server()
@@ -50,5 +59,5 @@ def main():
 
 if __name__ == "__main__":
     # Before running this script, refer to the README.md file to know how to set up
-    # your environment correctly in order to communicate with the Stratio GenAI Gateway
+    # your environment correctly in order to communicate with the OpenSearch service
     main()
